@@ -1,0 +1,101 @@
+<%- include("./partials/adminHeader.ejs", {title: 'Edit user' , admin}) -%>
+    <!-- Editform from admin panel -->
+    <!-- User edit form -->
+    <main>
+    <section class="form-section edit-form">
+        <div class="form-container">
+            <form id="editProfile">
+                <h2>Edit Profile of <%= user.fullName %>
+                </h2>
+                <div class="change-dp"><img id="profile_img" src="/uploads/<%= user.imageFileName %>"> <i
+                    class="fa-solid fa-camera" title="change picture" onclick="triggerFileInput()"></i><input
+                    type="file" id="userImage" name="userImage" accept="image/*" title="choose your profile image"
+                    style="display: none;">
+                <label class="error label-error-img d-none">This field is required</label>
+            </div>
+            <label for="fullName">Full Name</label>
+            <input class="inputs" type="text" id="fullName" name="fullName" value="<%= user.fullName %>">
+            <label class="error label-error d-none">This field is required</label>
+            <label for="email">Email</label>
+            <input class="inputs" type="text" id="email" name="email" value="<%= user.email %>">
+            <label class="error label-error d-none">This field is required</label>
+            <label for="phone">Phone</label>
+            <input class="inputs" type="tel" id="phone" name="phoneNumber" value="<%= user.phoneNumber %>">
+            <label class="error label-error d-none">This field is required</label>
+            <button type="button" onclick="updateUser('<%= user._id %>')">Update</button>
+        </form>
+        </div>
+    </section>
+    
+    <script>
+        // for the preview of new photo after uploading 
+        userImage.onchange = evt => {
+            const [file1] = userImage.files
+            if (file1) {
+                profile_img.src = URL.createObjectURL(file1)
+            }
+        }
+
+        // triggers the input file when i click the upload icon
+        function triggerFileInput() {
+            document.getElementById('userImage').click()
+        }
+
+        // dynamically removes error
+        const inputs = document.getElementsByClassName('inputs');
+        const errors = document.querySelectorAll('.label-error');
+
+        for (let i = 0; i < inputs.length; i++) {
+            inputs[i].addEventListener("input", () => {
+                if(inputs[i].value == ""){
+                    errors[i].classList.remove('d-none');
+                }else{
+                    errors[i].classList.add('d-none')
+                }
+            })
+        }
+        
+        async function updateUser(userId) {
+            const inputs = document.getElementsByClassName('inputs');
+            const errors = document.querySelectorAll('.label-error');
+            let required = true;
+            for (i = 0; i < inputs.length; i++) {
+                if (inputs[i].value == "") {
+                    errors[i].classList.remove('d-none');
+                    required = false;
+                } else {
+                    errors[i].classList.add('d-none');
+                }
+            }           
+
+            if (required ) {
+                const formData = new FormData(); // Create a new FormData object
+                formData.append('fullName', document.getElementById('fullName').value); //formData.append('key', value);
+                formData.append('email', document.getElementById('email').value);
+                formData.append('phoneNumber', document.getElementById('phone').value);
+
+                const userImageInput = document.getElementById('userImage');
+                if (userImageInput.files.length > 0) {
+                    formData.append('userImage', userImageInput.files[0], userImageInput.files[0].name);
+                }
+                try {
+                    const response = await fetch(`/api/user/editProfile/${userId}`, {
+                        method: 'PUT',
+                        body: formData,
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData);
+                    }
+                    const updatedUser = await response.json();
+                    console.log('User updated successfully', updatedUser);
+                    window.location.reload();
+                    alert('Updated successfully..');
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        }
+    </script>
+</main>
+    <%- include("./partials/footer.ejs") -%>
